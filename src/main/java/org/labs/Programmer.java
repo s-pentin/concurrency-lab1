@@ -1,19 +1,18 @@
 package org.labs;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class Programmer implements Runnable {
 
     private final int id;
-    private final AtomicInteger numberOfEaten;
+    private int numberOfEaten;
     private final SpoonManager spoonManager;
     private final Restaurant restaurant;
     private final int spoonCount;
 
     public Programmer(int id, Restaurant restaurant, SpoonManager spoonManager, int spoonCount) {
         this.id = id;
-        this.numberOfEaten = new AtomicInteger(0);
+        this.numberOfEaten = 0;
         this.restaurant = restaurant;
         this.spoonManager = spoonManager;
         this.spoonCount = spoonCount;
@@ -41,12 +40,12 @@ public class Programmer implements Runnable {
             }
         }
 
-        System.out.println("Программист " + this.id + " закончил обед. " + "Съедено порций: " + numberOfEaten.get());
+        System.out.println("Программист " + this.id + " закончил обед. " + "Съедено порций: " + numberOfEaten);
     }
 
     public void eat() {
         System.out.println(this.id + " начал есть");
-        numberOfEaten.incrementAndGet();
+        numberOfEaten++;
     }
 
     public void talk() {
@@ -54,7 +53,7 @@ public class Programmer implements Runnable {
     }
 
     public int getNumberOfEaten() {
-        return numberOfEaten.get();
+        return numberOfEaten;
     }
 
     private boolean askForSoup() {
