@@ -5,16 +5,16 @@ import java.util.concurrent.ExecutionException;
 public class Programmer implements Runnable {
 
     private final int id;
-    private int numberOfEaten;
     private final SpoonManager spoonManager;
     private final Restaurant restaurant;
     private final int spoonCount;
+    private final MealManager mealManager;
 
-    public Programmer(int id, Restaurant restaurant, SpoonManager spoonManager, int spoonCount) {
+    public Programmer(int id, Restaurant restaurant, SpoonManager spoonManager, MealManager mealManager, int spoonCount) {
         this.id = id;
-        this.numberOfEaten = 0;
         this.restaurant = restaurant;
         this.spoonManager = spoonManager;
+        this.mealManager = mealManager;
         this.spoonCount = spoonCount;
     }
 
@@ -22,38 +22,38 @@ public class Programmer implements Runnable {
     public void run() {
         while (true) {
             talk();
-            int leftSpoonId = (id - 1 + spoonCount) % spoonCount;
-            if (!askForSoup()) {
-                break;
-            }
             try {
+                mealManager.waitForTurn(id);
+
+                if (!askForSoup()) {
+                    mealManager.leave(id);
+                    break;
+                }
+
+                int leftSpoonId = (id - 1 + spoonCount) % spoonCount;
                 spoonManager.acquire(leftSpoonId, id);
+
                 try {
                     eat();
+                    mealManager.finishedEating(id);
                 } finally {
                     spoonManager.release(leftSpoonId, id);
                 }
             } catch (InterruptedException e) {
-                System.out.println("Программист " + this.id + " был прерван во время ожидания ложек");
                 Thread.currentThread().interrupt();
                 break;
             }
         }
 
-        System.out.println("Программист " + this.id + " закончил обед. " + "Съедено порций: " + numberOfEaten);
+        System.out.println("Программист " + this.id + " закончил обед. " + "Съедено порций: " + mealManager.getEatenCount(id));
     }
 
     public void eat() {
         System.out.println(this.id + " начал есть");
-        numberOfEaten++;
     }
 
     public void talk() {
         System.out.println(this.id + " начал разговаривать о лучших преподавалетях");
-    }
-
-    public int getNumberOfEaten() {
-        return numberOfEaten;
     }
 
     private boolean askForSoup() {
