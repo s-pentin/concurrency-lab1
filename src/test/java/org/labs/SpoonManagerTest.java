@@ -37,11 +37,8 @@ class SpoonManagerTest {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             Future<?> blocked = executor.submit(() -> {
-                try {
-                    manager.acquire(0, 1);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+                manager.acquire(0, 1);
+                manager.release(0, 1);
             });
 
             assertThrows(TimeoutException.class, () -> blocked.get(200, TimeUnit.MILLISECONDS));
@@ -50,7 +47,6 @@ class SpoonManagerTest {
 
             blocked.get(1, TimeUnit.SECONDS);
         } finally {
-            manager.release(0, 1);
             executor.shutdownNow();
         }
     }
@@ -63,11 +59,7 @@ class SpoonManagerTest {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         try {
             Future<?> other = executor.submit(() -> {
-                try {
-                    manager.acquire(2, 3);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
+                manager.acquire(2, 3);
             });
 
             // Spoons 2 and 3 are free, so acquisition should not block.

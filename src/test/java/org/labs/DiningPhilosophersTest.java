@@ -2,8 +2,6 @@ package org.labs;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -22,12 +20,11 @@ class DiningPhilosophersTest {
 
         Restaurant restaurant = new Restaurant(waiterCount, soupCount, 0);
         SpoonManager spoonManager = new SpoonManager(spoonCount);
-        List<Programmer> programmers = new ArrayList<>();
+        MealManager mealManager = new MealManager(programmerCount);
         ExecutorService executor = Executors.newFixedThreadPool(programmerCount);
         try {
             for (int i = 0; i < programmerCount; i++) {
-                Programmer programmer = new Programmer(i, restaurant, spoonManager, spoonCount);
-                programmers.add(programmer);
+                Programmer programmer = new Programmer(i, restaurant, spoonManager, mealManager, spoonCount);
                 executor.submit(programmer);
             }
 
@@ -35,15 +32,19 @@ class DiningPhilosophersTest {
             assertTrue(executor.awaitTermination(30, TimeUnit.SECONDS),
                     "Обед должен завершиться без взаимной блокировки");
 
-            int totalEaten = programmers.stream().mapToInt(Programmer::getNumberOfEaten).sum();
+            int totalEaten = 0;
+            for (int i = 0; i < programmerCount; i++) {
+                totalEaten += mealManager.getEatenCount(i);
+            }
             assertEquals(soupCount, totalEaten,
                     "Все порции должны быть съедены ровно по одному разу");
 
             int average = soupCount / programmerCount;
-            for (Programmer programmer : programmers) {
-                assertTrue(programmer.getNumberOfEaten() > 0,
+            for (int i = 0; i < programmerCount; i++) {
+                int eaten = mealManager.getEatenCount(i);
+                assertTrue(eaten > 0,
                         "Каждый программист должен поесть хотя бы один раз");
-                assertTrue(programmer.getNumberOfEaten() <= average * 2,
+                assertTrue(eaten <= average * 2,
                         "Еда должна распределяться примерно поровну");
             }
         } finally {
